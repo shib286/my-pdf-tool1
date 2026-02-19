@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Free PDF Merger</title>
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <style>
+        body { font-family: Arial; text-align: center; background: #f0f2f5; padding-top: 50px; }
+        .box { background: white; padding: 30px; border-radius: 10px; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        #status { margin-top: 20px; color: blue; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Easy PDF Merger</h1>
+        <p>Choose PDF files to merge</p>
+        <input type="file" id="pdf-input" accept=".pdf" multiple><br><br>
+        <button onclick="mergePDFs()">Merge & Download</button>
+        <p id="status"></p>
+    </div>
+    <script>
+        async function mergePDFs() {
+            const input = document.getElementById('pdf-input');
+            const status = document.getElementById('status');
+            if (input.files.length < 2) { alert("Please select 2 or more files!"); return; }
+            status.innerText = "Processing... please wait.";
+            try {
+                const mergedPdf = await PDFLib.PDFDocument.create();
+                for (const file of input.files) {
+                    const bytes = await file.arrayBuffer();
+                    const pdf = await PDFLib.PDFDocument.load(bytes);
+                    const pages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    pages.forEach(p => mergedPdf.addPage(p));
+                }
+                const pdfBytes = await mergedPdf.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = "merged.pdf";
+                link.click();
+                status.innerText = "Success! Downloaded.";
+            } catch (err) { status.innerText = "Error: " + err.message; }
+        }
+    </script>
+</body>
+  </html>
+  
